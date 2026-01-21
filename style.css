@@ -4,77 +4,81 @@
 
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, Arial, sans-serif;
   background: #f1f8e9;
-  color: #2e2e2e;
+  color: #263238;
 }
 
 header {
-  background: #33691e;
+  background: #2e7d32;
   color: white;
   padding: 16px;
   text-align: center;
 }
 
-header span {
+header p {
+  margin: 4px 0 0;
   font-size: 14px;
-  opacity: .9;
+  opacity: 0.9;
 }
 
 main {
   padding: 14px;
 }
 
-.card-form {
+.form {
   background: white;
   padding: 14px;
   border-radius: 14px;
   box-shadow: 0 4px 10px rgba(0,0,0,.1);
 }
 
-select, input, button {
+.form input {
   width: 100%;
   padding: 14px;
   font-size: 16px;
-  margin-bottom: 10px;
   border-radius: 10px;
   border: 1px solid #ccc;
+  margin-bottom: 10px;
 }
 
-button {
-  background: #558b2f;
-  color: white;
+.form button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
   border: none;
+  background: #388e3c;
+  color: white;
   font-weight: bold;
 }
 
-.planta {
+.item {
   background: white;
-  border-radius: 14px;
-  padding: 12px;
   margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
   box-shadow: 0 3px 8px rgba(0,0,0,.1);
   border-left: 6px solid #9ccc65;
 }
 
-.planta .nome {
-  font-size: 18px;
+.item .texto {
+  font-size: 16px;
   font-weight: bold;
 }
 
-.planta .info {
+.item .dias {
   font-size: 14px;
   color: #555;
   margin-top: 4px;
 }
 
-.alerta {
-  margin-top: 6px;
-  color: #d84315;
-  font-weight: bold;
-}
-
-.planta button {
+.item button {
   margin-top: 8px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
   background: #c62828;
+  color: white;
 }
