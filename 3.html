@@ -8,121 +8,90 @@
 <style>
 body {
   margin: 0;
-  font-family: system-ui, Arial, sans-serif;
-  background: #f1f8e9;
+  font-family: Arial, sans-serif;
+  background: #eef5ee;
 }
 
 header {
   background: #2e7d32;
-  color: white;
-  padding: 16px;
+  color: #fff;
+  padding: 15px;
   text-align: center;
 }
 
 main {
-  padding: 14px;
+  padding: 15px;
 }
 
-/* CARD */
 .card {
-  background: white;
+  background: #fff;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: 10px;
   margin-bottom: 12px;
-  box-shadow: 0 3px 8px rgba(0,0,0,.1);
-  border-left: 6px solid #9ccc65;
-}
-
-.card.destaque {
-  border-left-color: #d32f2f;
-  background: #fff3e0;
-}
-
-.nome {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.info {
-  font-size: 14px;
-  color: #555;
-  margin-top: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
 }
 
 .alerta {
   margin-top: 6px;
-  font-weight: bold;
-  color: #d32f2f;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
-.acoes {
+.rega { background: #e3f2fd; color: #1565c0; }
+.adubo { background: #e8f5e9; color: #2e7d32; }
+.colheita { background: #fff3e0; color: #ef6c00; }
+
+.botoes {
   display: flex;
   gap: 8px;
   margin-top: 10px;
 }
 
-.acoes button {
+.botoes button {
   flex: 1;
-  padding: 10px;
+  padding: 8px;
   border: none;
-  border-radius: 8px;
-  color: white;
+  border-radius: 6px;
 }
 
-.editar { background: #0277bd; }
-.excluir { background: #c62828; }
+.editar { background: #1976d2; color: #fff; }
+.excluir { background: #c62828; color: #fff; }
+.concluir { background: #2e7d32; color: #fff; }
 
-/* BOTÃO FLUTUANTE */
 .fab {
   position: fixed;
-  bottom: 20px;
   right: 20px;
+  bottom: 20px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #388e3c;
-  color: white;
-  font-size: 32px;
+  background: #2e7d32;
+  color: #fff;
+  font-size: 28px;
   border: none;
-  box-shadow: 0 4px 10px rgba(0,0,0,.3);
 }
 
-/* MODAL */
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0,0,0,.5);
   display: none;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 .modal-content {
-  background: white;
-  padding: 16px;
-  border-radius: 14px;
+  background: #fff;
+  padding: 15px;
   width: 90%;
-  max-width: 400px;
+  border-radius: 10px;
 }
 
 .modal-content input {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-.modal-content button {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  background: #2e7d32;
-  color: white;
-  border: none;
-  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
 }
 </style>
 </head>
@@ -136,16 +105,18 @@ main {
 
 <main id="lista"></main>
 
-<button class="fab" onclick="novo()">+</button>
+<button class="fab" onclick="abrir()">+</button>
 
 <div class="modal" id="modal">
   <div class="modal-content">
+    <h3>Adicionar / Editar</h3>
     <input id="nome" placeholder="Nome (obrigatório)">
-    <input id="data" type="date">
     <input id="rega" type="number" placeholder="Rega (dias)">
-    <input id="colheita" type="number" placeholder="Colheita (dias)">
     <input id="adubo" type="number" placeholder="Adubação (dias)">
+    <input id="colheita" type="number" placeholder="Colheita (dias)">
+    <input id="data" type="date">
     <button onclick="salvarItem()">Salvar</button>
+    <button onclick="fechar()">Cancelar</button>
   </div>
 </div>
 
@@ -153,119 +124,113 @@ main {
 let dados = JSON.parse(localStorage.getItem("horta")) || [];
 let editando = null;
 
-function salvarStorage() {
-  localStorage.setItem("horta", JSON.stringify(dados));
-}
-
-function diasPassados(data) {
-  return Math.floor((Date.now() - new Date(data)) / 86400000);
-}
-
 function hojeISO() {
   return new Date().toISOString().split("T")[0];
 }
 
-function novo() {
-  editando = null;
-  abrirModal({
-    nome: "",
-    data: hojeISO(),
-    rega: "",
-    colheita: "",
-    adubo: ""
-  });
+function diasPassados(data) {
+  const inicio = new Date(data);
+  const hoje = new Date();
+  return Math.floor((hoje - inicio) / (1000*60*60*24));
 }
 
-function editar(index) {
-  editando = index;
-  abrirModal(dados[index]);
+function precisaHoje(dias, intervalo) {
+  if (!intervalo || intervalo <= 0) return false;
+  if (dias === 0) return false;
+  return dias % intervalo === 0;
 }
 
-function abrirModal(item) {
-  document.getElementById("nome").value = item.nome || "";
-  document.getElementById("data").value = item.data
-    ? new Date(item.data).toISOString().split("T")[0]
-    : hojeISO();
-  document.getElementById("rega").value = item.rega || "";
-  document.getElementById("colheita").value = item.colheita || "";
-  document.getElementById("adubo").value = item.adubo || "";
-  document.getElementById("modal").style.display = "flex";
-}
-
-function fecharModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-function salvarItem() {
-  const nome = document.getElementById("nome").value.trim();
-  if (!nome) return;
-
-  const item = {
-    nome,
-    data: document.getElementById("data").value,
-    rega: Number(document.getElementById("rega").value),
-    colheita: Number(document.getElementById("colheita").value),
-    adubo: Number(document.getElementById("adubo").value)
-  };
-
-  if (editando === null) {
-    dados.push(item);
-  } else {
-    dados[editando] = item;
-  }
-
-  salvarStorage();
-  fecharModal();
-  render();
-}
-
-function excluir(index) {
-  if (!confirm("Excluir este item?")) return;
-  dados.splice(index, 1);
-  salvarStorage();
-  render();
+function salvarStorage() {
+  localStorage.setItem("horta", JSON.stringify(dados));
 }
 
 function render() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  dados.forEach((item, index) => {
+  dados.forEach((item, i) => {
     const dias = diasPassados(item.data);
-    let alertas = [];
-    let destaque = false;
 
-    if (item.rega && dias % item.rega === 0) {
-      alertas.push("💧 Regar");
-      destaque = true;
-    }
-    if (item.adubo && dias % item.adubo === 0) {
-      alertas.push("🌱 Adubar");
-      destaque = true;
-    }
-    if (item.colheita && dias >= item.colheita) {
-      alertas.push("✂ Colher");
-      destaque = true;
-    }
+    const hojeRega = precisaHoje(dias, item.rega);
+    const hojeAdubo = precisaHoje(dias, item.adubo);
+    const hojeColheita = item.colheita && dias === item.colheita;
 
     const div = document.createElement("div");
-    div.className = "card" + (destaque ? " destaque" : "");
+    div.className = "card";
 
     div.innerHTML = `
-      <div class="nome">${item.nome}</div>
-      <div class="info">📆 ${dias} dias</div>
-      ${item.rega ? `<div class="info">💧 Rega: ${item.rega} dias</div>` : ""}
-      ${item.adubo ? `<div class="info">🌱 Adubação: ${item.adubo} dias</div>` : ""}
-      ${item.colheita ? `<div class="info">✂ Colheita: ${item.colheita} dias</div>` : ""}
-      ${alertas.length ? `<div class="alerta">${alertas.join(" • ")}</div>` : ""}
-      <div class="acoes">
-        <button class="editar" onclick="editar(${index})">Editar</button>
-        <button class="excluir" onclick="excluir(${index})">Excluir</button>
+      <strong>${item.nome}</strong><br>
+      <small>📅 ${dias} dias desde o plantio</small>
+
+      ${hojeRega ? `<div class="alerta rega">💧 REGAR HOJE</div>` : ""}
+      ${hojeAdubo ? `<div class="alerta adubo">🌿 ADUBAR HOJE</div>` : ""}
+      ${hojeColheita ? `<div class="alerta colheita">🥬 COLHER HOJE</div>` : ""}
+
+      <div class="botoes">
+        <button class="editar" onclick="editar(${i})">Editar</button>
+        <button class="concluir" onclick="concluir(${i})">Concluir</button>
+        <button class="excluir" onclick="excluir(${i})">Excluir</button>
       </div>
     `;
 
     lista.appendChild(div);
   });
+}
+
+function abrir() {
+  editando = null;
+  nome.value = "";
+  rega.value = "";
+  adubo.value = "";
+  colheita.value = "";
+  data.value = hojeISO();
+  modal.style.display = "flex";
+}
+
+function fechar() {
+  modal.style.display = "none";
+}
+
+function salvarItem() {
+  if (!nome.value.trim()) return;
+
+  const item = {
+    nome: nome.value,
+    rega: Number(rega.value) || null,
+    adubo: Number(adubo.value) || null,
+    colheita: Number(colheita.value) || null,
+    data: data.value
+  };
+
+  if (editando === null) dados.push(item);
+  else dados[editando] = item;
+
+  salvarStorage();
+  fechar();
+  render();
+}
+
+function editar(i) {
+  editando = i;
+  const item = dados[i];
+  nome.value = item.nome;
+  rega.value = item.rega || "";
+  adubo.value = item.adubo || "";
+  colheita.value = item.colheita || "";
+  data.value = item.data;
+  modal.style.display = "flex";
+}
+
+function excluir(i) {
+  dados.splice(i,1);
+  salvarStorage();
+  render();
+}
+
+function concluir(i) {
+  dados.splice(i,1);
+  salvarStorage();
+  render();
 }
 
 render();
