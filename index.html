@@ -1,27 +1,167 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horta PET</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Horta</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #eef5ee;
+}
+
+header {
+  background: #2e7d32;
+  color: #fff;
+  padding: 15px;
+  text-align: center;
+}
+
+main {
+  padding: 15px;
+}
+
+.card {
+  background: #fff;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+
+.card h3 {
+  margin-top: 0;
+}
+
+.valor {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.link {
+  color: #2e7d32;
+  font-size: 14px;
+  margin-top: 6px;
+  display: inline-block;
+}
+
+.saldo {
+  background: #e8f5e9;
+  border-left: 6px solid #2e7d32;
+}
+
+.alerta {
+  margin-top: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.rega { background: #e3f2fd; color: #1565c0; }
+.adubo { background: #e8f5e9; color: #2e7d32; }
+.colheita { background: #fff3e0; color: #ef6c00; }
+</style>
 </head>
+
 <body>
 
 <header>
-  <h1>🌱 Horta PET</h1>
-  <p>Sertão do Ceará</p>
+  <h2>🌱 Painel da Horta</h2>
+  <small>Sertão do Ceará</small>
 </header>
 
 <main>
-  <div class="form">
-    <input id="texto" placeholder="Ex: Plantei coentro na PET 2L">
-    <button id="btn">Adicionar</button>
+
+  <!-- FINANCEIRO -->
+  <div class="card">
+    <h3>💰 Despesas</h3>
+    <div class="valor" id="totalDespesas">R$ 0,00</div>
+    <a class="link" href="despesas.html">Ver despesas →</a>
   </div>
 
-  <section id="lista"></section>
+  <div class="card">
+    <h3>💵 Receitas</h3>
+    <div class="valor" id="totalReceitas">R$ 0,00</div>
+    <a class="link" href="receitas.html">Ver receitas →</a>
+  </div>
+
+  <div class="card saldo">
+    <h3>📊 Saldo</h3>
+    <div class="valor" id="saldo">R$ 0,00</div>
+  </div>
+
+  <!-- HORTA HOJE -->
+  <div class="card">
+    <h3>🌿 Atividades de Hoje</h3>
+    <div id="atividades"></div>
+  </div>
+
 </main>
 
-<script src="script.js"></script>
+<script>
+function formatar(v) {
+  return Number(v).toFixed(2).replace(".", ",");
+}
+
+/* ===== FINANCEIRO ===== */
+const despesas = JSON.parse(localStorage.getItem("despesas")) || [];
+const receitas = JSON.parse(localStorage.getItem("receitas")) || [];
+
+let totalDespesas = 0;
+despesas.forEach(d => totalDespesas += Number(d.valor) || 0);
+
+let totalReceitas = 0;
+receitas.forEach(r => totalReceitas += Number(r.valor) || 0);
+
+document.getElementById("totalDespesas").innerText = "R$ " + formatar(totalDespesas);
+document.getElementById("totalReceitas").innerText = "R$ " + formatar(totalReceitas);
+document.getElementById("saldo").innerText = "R$ " + formatar(totalReceitas - totalDespesas);
+
+/* ===== HORTA ===== */
+const horta = JSON.parse(localStorage.getItem("horta")) || [];
+
+function diasPassados(data) {
+  const inicio = new Date(data);
+  const hoje = new Date();
+  return Math.floor((hoje - inicio) / (1000*60*60*24));
+}
+
+function precisaHoje(dias, intervalo) {
+  if (!intervalo || intervalo <= 0) return false;
+  if (dias === 0) return false;
+  return dias % intervalo === 0;
+}
+
+let regar = [];
+let adubar = [];
+let colher = [];
+
+horta.forEach(item => {
+  const dias = diasPassados(item.data);
+
+  if (precisaHoje(dias, item.rega)) regar.push(item.nome);
+  if (precisaHoje(dias, item.adubo)) adubar.push(item.nome);
+  if (item.colheita && dias === item.colheita) colher.push(item.nome);
+});
+
+const atividades = document.getElementById("atividades");
+
+if (!regar.length && !adubar.length && !colher.length) {
+  atividades.innerHTML = "<small>Nenhuma atividade hoje 🌱</small>";
+}
+
+if (regar.length) {
+  atividades.innerHTML += `<div class="alerta rega">💧 Regar: ${regar.join(", ")}</div>`;
+}
+if (adubar.length) {
+  atividades.innerHTML += `<div class="alerta adubo">🌿 Adubar: ${adubar.join(", ")}</div>`;
+}
+if (colher.length) {
+  atividades.innerHTML += `<div class="alerta colheita">🥬 Colher: ${colher.join(", ")}</div>`;
+}
+</script>
+
 </body>
 </html>
