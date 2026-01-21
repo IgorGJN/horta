@@ -1,56 +1,24 @@
-let dados = JSON.parse(localStorage.getItem("hortaPET")) || [];
-
 const regras = {
-  "Coentro": { rega: 1, colheita: 35 },
-  "Alface crespa": { rega: 1, colheita: 40 },
-  "Cebolinha": { rega: 2, colheita: 60 },
-  "Tomate": { rega: 2, colheita: 90 },
-  "Pimenta de cheiro": { rega: 3, colheita: 90 }
+  coentro: { nome: "Coentro", rega: 1, colheita: 35 },
+  alface: { nome: "Alface crespa", rega: 1, colheita: 40 },
+  cebolinha: { nome: "Cebolinha", rega: 2, colheita: 60 },
+  tomate: { nome: "Tomate", rega: 2, colheita: 90 },
+  pimenta: { nome: "Pimenta de cheiro", rega: 3, colheita: 90 }
 };
+
+let dados = JSON.parse(localStorage.getItem("hortaPET")) || [];
 
 function salvar() {
   localStorage.setItem("hortaPET", JSON.stringify(dados));
 }
 
-
 function diasPassados(data) {
-  return Math.floor((new Date() - new Date(data)) / 86400000);
-}
-
-function gerarAlerta(planta, dias) {
-  const regra = regras[planta];
-  if (!regra) return "";
-
-  let alertas = [];
-  if (dias % regra.rega === 0) alertas.push("💧 Regar hoje");
-  if (dias >= regra.colheita) alertas.push("✂ Pronto para colher");
-
-  return alertas.join(" • ");
-}
-
-function renderizar() {
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  dados.forEach((item, index) => {
-    const dias = diasPassados(item.data);
-    const alerta = gerarAlerta(item.planta, dias);
-
-    lista.innerHTML += `
-      <div class="card">
-        <h3>${item.planta}</h3>
-        <div class="info">🧴 ${item.pet}</div>
-        <div class="info">📆 ${dias} dias</div>
-        ${alerta ? `<div class="alerta">${alerta}</div>` : ""}
-        <button onclick="concluir(${index})">Concluir</button>
-      </div>
-    `;
-  });
+  return Math.floor((Date.now() - new Date(data)) / 86400000);
 }
 
 function adicionar() {
-  const planta = document.getElementById("planta").value.trim();
-  const pet = document.getElementById("pet").value.trim();
+  const planta = document.getElementById("planta").value;
+  const pet = document.getElementById("pet").value;
 
   if (!planta || !pet) return;
 
@@ -62,13 +30,35 @@ function adicionar() {
 
   salvar();
   renderizar();
-
-  document.getElementById("planta").value = "";
   document.getElementById("pet").value = "";
 }
 
-function concluir(index) {
-  dados.splice(index, 1);
+function renderizar() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  dados.forEach((item, i) => {
+    const regra = regras[item.planta];
+    const dias = diasPassados(item.data);
+
+    let alerta = "";
+    if (dias % regra.rega === 0) alerta += "💧 Regar hoje ";
+    if (dias >= regra.colheita) alerta += "✂ Colher";
+
+    lista.innerHTML += `
+      <div class="planta">
+        <div class="nome">${regra.nome}</div>
+        <div class="info">🧴 ${item.pet}</div>
+        <div class="info">📆 ${dias} dias</div>
+        ${alerta ? `<div class="alerta">${alerta}</div>` : ""}
+        <button onclick="concluir(${i})">Concluir</button>
+      </div>
+    `;
+  });
+}
+
+function concluir(i) {
+  dados.splice(i, 1);
   salvar();
   renderizar();
 }
