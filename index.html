@@ -8,21 +8,29 @@
 </head>
 <body>
 
-  <header>
-    <h1>🌱 Horta PET</h1>
-    <p>Controle simples – Sertão do Ceará</p>
-  </header>
+<header>
+  <h1>🌱 Horta PET</h1>
+  <span>Sertão do Ceará</span>
+</header>
 
-  <main>
-    <section class="form">
-      <input id="planta" placeholder="Planta (ex: Coentro)">
-      <input id="pet" placeholder="PET (ex: 2L – Parede Oeste)">
-      <button onclick="adicionar()">Adicionar</button>
-    </section>
+<main>
+  <div class="card-form">
+    <select id="planta">
+      <option value="">Selecione a planta</option>
+      <option value="coentro">Coentro</option>
+      <option value="alface">Alface crespa</option>
+      <option value="cebolinha">Cebolinha</option>
+      <option value="tomate">Tomate</option>
+      <option value="pimenta">Pimenta de cheiro</option>
+    </select>
 
-    <section id="lista" class="lista"></section>
-  </main>
+    <input id="pet" placeholder="PET (ex: 2L – parede oeste)">
+    <button onclick="adicionar()">Adicionar</button>
+  </div>
 
-  <script src="script.js"></script>
+  <section id="lista"></section>
+</main>
+
+<script src="script.js"></script>
 </body>
 </html>
