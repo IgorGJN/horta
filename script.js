@@ -1,10 +1,6 @@
-const regras = {
-  coentro: { nome: "Coentro", rega: 1, colheita: 35 },
-  alface: { nome: "Alface crespa", rega: 1, colheita: 40 },
-  cebolinha: { nome: "Cebolinha", rega: 2, colheita: 60 },
-  tomate: { nome: "Tomate", rega: 2, colheita: 90 },
-  pimenta: { nome: "Pimenta de cheiro", rega: 3, colheita: 90 }
-};
+const lista = document.getElementById("lista");
+const input = document.getElementById("texto");
+const btn = document.getElementById("btn");
 
 let dados = JSON.parse(localStorage.getItem("hortaPET")) || [];
 
@@ -16,51 +12,41 @@ function diasPassados(data) {
   return Math.floor((Date.now() - new Date(data)) / 86400000);
 }
 
-function adicionar() {
-  const planta = document.getElementById("planta").value;
-  const pet = document.getElementById("pet").value;
+function render() {
+  lista.innerHTML = "";
 
-  if (!planta || !pet) return;
+  dados.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "item";
+
+    div.innerHTML = `
+      <div class="texto">${item.texto}</div>
+      <div class="dias">📆 ${diasPassados(item.data)} dias</div>
+      <button onclick="concluir(${index})">Concluir</button>
+    `;
+
+    lista.appendChild(div);
+  });
+}
+
+btn.addEventListener("click", () => {
+  const texto = input.value.trim();
+  if (!texto) return;
 
   dados.push({
-    planta,
-    pet,
+    texto,
     data: new Date()
   });
 
   salvar();
-  renderizar();
-  document.getElementById("pet").value = "";
-}
+  render();
+  input.value = "";
+});
 
-function renderizar() {
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  dados.forEach((item, i) => {
-    const regra = regras[item.planta];
-    const dias = diasPassados(item.data);
-
-    let alerta = "";
-    if (dias % regra.rega === 0) alerta += "💧 Regar hoje ";
-    if (dias >= regra.colheita) alerta += "✂ Colher";
-
-    lista.innerHTML += `
-      <div class="planta">
-        <div class="nome">${regra.nome}</div>
-        <div class="info">🧴 ${item.pet}</div>
-        <div class="info">📆 ${dias} dias</div>
-        ${alerta ? `<div class="alerta">${alerta}</div>` : ""}
-        <button onclick="concluir(${i})">Concluir</button>
-      </div>
-    `;
-  });
-}
-
-function concluir(i) {
-  dados.splice(i, 1);
+function concluir(index) {
+  dados.splice(index, 1);
   salvar();
-  renderizar();
+  render();
 }
 
-renderizar();
+render();
