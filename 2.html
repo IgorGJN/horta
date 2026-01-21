@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horta PET</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #e8f5e9;
+}
+
+header {
+  background: #2e7d32;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+main {
+  padding: 15px;
+}
+
+input, button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+button {
+  background: #388e3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+.item {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+
+.dias {
+  font-size: 14px;
+  color: #555;
+  margin-top: 5px;
+}
+
+.item button {
+  background: #c62828;
+  margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>🌱 Horta PET</h2>
+  <small>Sertão do Ceará</small>
+</header>
+
+<main>
+  <input id="texto" placeholder="Ex: Plantei coentro na PET 2L">
+  <button onclick="adicionar()">Adicionar</button>
+
+  <div id="lista"></div>
+</main>
+
+<script>
+let dados = [];
+
+try {
+  dados = JSON.parse(localStorage.getItem("horta")) || [];
+} catch (e) {
+  dados = [];
+}
+
+function salvar() {
+  localStorage.setItem("horta", JSON.stringify(dados));
+}
+
+function diasPassados(data) {
+  const hoje = new Date();
+  const inicio = new Date(data);
+  return Math.floor((hoje - inicio) / (1000 * 60 * 60 * 24));
+}
+
+function render() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  dados.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "item";
+
+    div.innerHTML = `
+      <strong>${item.texto}</strong>
+      <div class="dias">📆 ${diasPassados(item.data)} dias</div>
+      <button onclick="concluir(${index})">Concluir</button>
+    `;
+
+    lista.appendChild(div);
+  });
+}
+
+function adicionar() {
+  const input = document.getElementById("texto");
+  const texto = input.value.trim();
+
+  if (texto === "") return;
+
+  dados.push({
+    texto: texto,
+    data: new Date()
+  });
+
+  salvar();
+  render();
+  input.value = "";
+}
+
+function concluir(index) {
+  dados.splice(index, 1);
+  salvar();
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
