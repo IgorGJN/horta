@@ -55,6 +55,23 @@ main {
   color: #d32f2f;
 }
 
+.acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.acoes button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+}
+
+.editar { background: #0277bd; }
+.excluir { background: #c62828; }
+
 /* BOTÃO FLUTUANTE */
 .fab {
   position: fixed;
@@ -119,22 +136,24 @@ main {
 
 <main id="lista"></main>
 
-<button class="fab" onclick="abrirModal()">+</button>
+<button class="fab" onclick="novo()">+</button>
 
 <div class="modal" id="modal">
   <div class="modal-content">
-    <input id="nome" placeholder="Nome da planta (obrigatório)">
+    <input id="nome" placeholder="Nome (obrigatório)">
+    <input id="data" type="date">
     <input id="rega" type="number" placeholder="Rega (dias)">
     <input id="colheita" type="number" placeholder="Colheita (dias)">
     <input id="adubo" type="number" placeholder="Adubação (dias)">
-    <button onclick="adicionar()">Salvar</button>
+    <button onclick="salvarItem()">Salvar</button>
   </div>
 </div>
 
 <script>
 let dados = JSON.parse(localStorage.getItem("horta")) || [];
+let editando = null;
 
-function salvar() {
+function salvarStorage() {
   localStorage.setItem("horta", JSON.stringify(dados));
 }
 
@@ -142,7 +161,34 @@ function diasPassados(data) {
   return Math.floor((Date.now() - new Date(data)) / 86400000);
 }
 
-function abrirModal() {
+function hojeISO() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function novo() {
+  editando = null;
+  abrirModal({
+    nome: "",
+    data: hojeISO(),
+    rega: "",
+    colheita: "",
+    adubo: ""
+  });
+}
+
+function editar(index) {
+  editando = index;
+  abrirModal(dados[index]);
+}
+
+function abrirModal(item) {
+  document.getElementById("nome").value = item.nome || "";
+  document.getElementById("data").value = item.data
+    ? new Date(item.data).toISOString().split("T")[0]
+    : hojeISO();
+  document.getElementById("rega").value = item.rega || "";
+  document.getElementById("colheita").value = item.colheita || "";
+  document.getElementById("adubo").value = item.adubo || "";
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -150,36 +196,41 @@ function fecharModal() {
   document.getElementById("modal").style.display = "none";
 }
 
-function adicionar() {
+function salvarItem() {
   const nome = document.getElementById("nome").value.trim();
   if (!nome) return;
 
-  dados.push({
+  const item = {
     nome,
+    data: document.getElementById("data").value,
     rega: Number(document.getElementById("rega").value),
     colheita: Number(document.getElementById("colheita").value),
-    adubo: Number(document.getElementById("adubo").value),
-    data: new Date()
-  });
+    adubo: Number(document.getElementById("adubo").value)
+  };
 
-  salvar();
+  if (editando === null) {
+    dados.push(item);
+  } else {
+    dados[editando] = item;
+  }
+
+  salvarStorage();
   fecharModal();
-  limpar();
   render();
 }
 
-function limpar() {
-  document.getElementById("nome").value = "";
-  document.getElementById("rega").value = "";
-  document.getElementById("colheita").value = "";
-  document.getElementById("adubo").value = "";
+function excluir(index) {
+  if (!confirm("Excluir este item?")) return;
+  dados.splice(index, 1);
+  salvarStorage();
+  render();
 }
 
 function render() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  dados.forEach(item => {
+  dados.forEach((item, index) => {
     const dias = diasPassados(item.data);
     let alertas = [];
     let destaque = false;
@@ -207,6 +258,10 @@ function render() {
       ${item.adubo ? `<div class="info">🌱 Adubação: ${item.adubo} dias</div>` : ""}
       ${item.colheita ? `<div class="info">✂ Colheita: ${item.colheita} dias</div>` : ""}
       ${alertas.length ? `<div class="alerta">${alertas.join(" • ")}</div>` : ""}
+      <div class="acoes">
+        <button class="editar" onclick="editar(${index})">Editar</button>
+        <button class="excluir" onclick="excluir(${index})">Excluir</button>
+      </div>
     `;
 
     lista.appendChild(div);
