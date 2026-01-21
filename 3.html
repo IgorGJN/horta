@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horta PET</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: #f1f8e9;
+}
+
+header {
+  background: #2e7d32;
+  color: white;
+  padding: 16px;
+  text-align: center;
+}
+
+main {
+  padding: 14px;
+}
+
+/* CARD */
+.card {
+  background: white;
+  padding: 14px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,.1);
+  border-left: 6px solid #9ccc65;
+}
+
+.card.destaque {
+  border-left-color: #d32f2f;
+  background: #fff3e0;
+}
+
+.nome {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.info {
+  font-size: 14px;
+  color: #555;
+  margin-top: 4px;
+}
+
+.alerta {
+  margin-top: 6px;
+  font-weight: bold;
+  color: #d32f2f;
+}
+
+/* BOTÃO FLUTUANTE */
+.fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #388e3c;
+  color: white;
+  font-size: 32px;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,.3);
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 16px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.modal-content button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>🌱 Horta PET</h2>
+  <small>Sertão do Ceará</small>
+</header>
+
+<main id="lista"></main>
+
+<button class="fab" onclick="abrirModal()">+</button>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <input id="nome" placeholder="Nome da planta (obrigatório)">
+    <input id="rega" type="number" placeholder="Rega (dias)">
+    <input id="colheita" type="number" placeholder="Colheita (dias)">
+    <input id="adubo" type="number" placeholder="Adubação (dias)">
+    <button onclick="adicionar()">Salvar</button>
+  </div>
+</div>
+
+<script>
+let dados = JSON.parse(localStorage.getItem("horta")) || [];
+
+function salvar() {
+  localStorage.setItem("horta", JSON.stringify(dados));
+}
+
+function diasPassados(data) {
+  return Math.floor((Date.now() - new Date(data)) / 86400000);
+}
+
+function abrirModal() {
+  document.getElementById("modal").style.display = "flex";
+}
+
+function fecharModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+function adicionar() {
+  const nome = document.getElementById("nome").value.trim();
+  if (!nome) return;
+
+  dados.push({
+    nome,
+    rega: Number(document.getElementById("rega").value),
+    colheita: Number(document.getElementById("colheita").value),
+    adubo: Number(document.getElementById("adubo").value),
+    data: new Date()
+  });
+
+  salvar();
+  fecharModal();
+  limpar();
+  render();
+}
+
+function limpar() {
+  document.getElementById("nome").value = "";
+  document.getElementById("rega").value = "";
+  document.getElementById("colheita").value = "";
+  document.getElementById("adubo").value = "";
+}
+
+function render() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  dados.forEach(item => {
+    const dias = diasPassados(item.data);
+    let alertas = [];
+    let destaque = false;
+
+    if (item.rega && dias % item.rega === 0) {
+      alertas.push("💧 Regar");
+      destaque = true;
+    }
+    if (item.adubo && dias % item.adubo === 0) {
+      alertas.push("🌱 Adubar");
+      destaque = true;
+    }
+    if (item.colheita && dias >= item.colheita) {
+      alertas.push("✂ Colher");
+      destaque = true;
+    }
+
+    const div = document.createElement("div");
+    div.className = "card" + (destaque ? " destaque" : "");
+
+    div.innerHTML = `
+      <div class="nome">${item.nome}</div>
+      <div class="info">📆 ${dias} dias</div>
+      ${item.rega ? `<div class="info">💧 Rega: ${item.rega} dias</div>` : ""}
+      ${item.adubo ? `<div class="info">🌱 Adubação: ${item.adubo} dias</div>` : ""}
+      ${item.colheita ? `<div class="info">✂ Colheita: ${item.colheita} dias</div>` : ""}
+      ${alertas.length ? `<div class="alerta">${alertas.join(" • ")}</div>` : ""}
+    `;
+
+    lista.appendChild(div);
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
