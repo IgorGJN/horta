@@ -11,15 +11,18 @@ body {
   font-family: Arial, sans-serif;
   background: #eef5ee;
 }
+
 header {
   background: #2e7d32;
   color: #fff;
   padding: 15px;
   text-align: center;
 }
+
 main {
   padding: 15px;
 }
+
 .card {
   background: #fff;
   padding: 14px;
@@ -27,12 +30,14 @@ main {
   margin-bottom: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,.1);
 }
+
 .alerta {
   margin-top: 6px;
   padding: 6px;
   border-radius: 6px;
   font-size: 14px;
 }
+
 .rega { background: #e3f2fd; color: #1565c0; }
 .adubo { background: #e8f5e9; color: #2e7d32; }
 .colheita { background: #fff3e0; color: #ef6c00; }
@@ -49,6 +54,7 @@ main {
   margin-top: 8px;
   flex-wrap: wrap;
 }
+
 .botoes button {
   flex: 1;
   padding: 8px;
@@ -75,7 +81,7 @@ main {
   border: none;
 }
 
-/* MODAL */
+/* MODAIS */
 .modal {
   position: fixed;
   inset: 0;
@@ -84,6 +90,7 @@ main {
   justify-content: center;
   align-items: center;
 }
+
 .modal-content {
   background: #fff;
   padding: 16px;
@@ -91,23 +98,33 @@ main {
   max-width: 420px;
   border-radius: 12px;
 }
+
+.modal-content h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
 .modal-content label {
   font-size: 14px;
   margin-top: 8px;
   display: block;
 }
-.modal-content input {
+
+.modal-content input,
+.modal-content select {
   width: 100%;
   padding: 10px;
   margin-top: 4px;
   border-radius: 6px;
   border: 1px solid #ccc;
 }
+
 .modal-botoes {
   display: flex;
   gap: 10px;
   margin-top: 12px;
 }
+
 .modal-botoes button {
   flex: 1;
   padding: 10px;
@@ -128,6 +145,7 @@ main {
 
 <button class="fab" onclick="abrir()">+</button>
 
+<!-- MODAL PLANTA -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <h3>Adicionar / Editar Planta</h3>
@@ -154,6 +172,28 @@ main {
   </div>
 </div>
 
+<!-- MODAL EVENTO -->
+<div class="modal" id="modalEvento">
+  <div class="modal-content">
+    <h3>Registrar Evento</h3>
+
+    <label>Tipo do evento</label>
+    <select id="eventoTipo">
+      <option value="germinacao">🌱 Germinação</option>
+      <option value="adubacao">🌿 Adubação</option>
+      <option value="colheita">🥬 Colheita</option>
+    </select>
+
+    <label>Data</label>
+    <input type="date" id="eventoData">
+
+    <div class="modal-botoes">
+      <button class="concluir" onclick="salvarEvento()">Salvar</button>
+      <button class="excluir" onclick="fecharEvento()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let dados = JSON.parse(localStorage.getItem("horta")) || [];
 
@@ -164,6 +204,7 @@ dados = dados.map(item => ({
 }));
 
 let editando = null;
+let eventoIndex = null;
 
 function hojeISO() {
   return new Date().toISOString().split("T")[0];
@@ -179,15 +220,6 @@ function precisaHoje(dias, intervalo) {
 
 function salvarStorage() {
   localStorage.setItem("horta", JSON.stringify(dados));
-}
-
-function adicionarEvento(i, tipo) {
-  const dataEvento = prompt("Data do evento (AAAA-MM-DD):", hojeISO());
-  if (!dataEvento) return;
-
-  dados[i].eventos.push({ tipo, data: dataEvento });
-  salvarStorage();
-  render();
 }
 
 function render() {
@@ -215,9 +247,9 @@ function render() {
         ${eventosHTML}
 
         <div class="botoes">
-          <button class="evento" onclick="adicionarEvento(${i}, 'germinacao')">🌱 Germinou</button>
-          <button class="evento" onclick="adicionarEvento(${i}, 'adubacao')">🌿 Adubei</button>
-          <button class="evento" onclick="adicionarEvento(${i}, 'colheita')">🥬 Colhi</button>
+          <button class="evento" onclick="abrirEvento(${i}, 'germinacao')">🌱 Germinou</button>
+          <button class="evento" onclick="abrirEvento(${i}, 'adubacao')">🌿 Adubei</button>
+          <button class="evento" onclick="abrirEvento(${i}, 'colheita')">🥬 Colhi</button>
         </div>
 
         <div class="botoes">
@@ -230,6 +262,7 @@ function render() {
   });
 }
 
+/* PLANTA */
 function abrir() {
   editando = null;
   nome.value = "";
@@ -285,6 +318,31 @@ function excluir(i) {
 function concluir(i) {
   dados.splice(i, 1);
   salvarStorage();
+  render();
+}
+
+/* EVENTOS */
+function abrirEvento(i, tipo) {
+  eventoIndex = i;
+  eventoTipo.value = tipo;
+  eventoData.value = hojeISO();
+  modalEvento.style.display = "flex";
+}
+
+function fecharEvento() {
+  modalEvento.style.display = "none";
+}
+
+function salvarEvento() {
+  if (eventoIndex === null) return;
+
+  dados[eventoIndex].eventos.push({
+    tipo: eventoTipo.value,
+    data: eventoData.value
+  });
+
+  salvarStorage();
+  fecharEvento();
   render();
 }
 
