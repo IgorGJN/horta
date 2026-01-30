@@ -42,10 +42,16 @@ main {
 .adubo { background: #e8f5e9; color: #2e7d32; }
 .colheita { background: #fff3e0; color: #ef6c00; }
 
+.eventos {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
 .botoes {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .botoes button {
@@ -53,11 +59,13 @@ main {
   padding: 8px;
   border: none;
   border-radius: 6px;
+  font-size: 13px;
 }
 
 .editar { background: #1976d2; color: #fff; }
 .excluir { background: #c62828; color: #fff; }
 .concluir { background: #2e7d32; color: #fff; }
+.evento { background: #eeeeee; }
 
 .fab {
   position: fixed;
@@ -88,11 +96,6 @@ main {
   width: 92%;
   max-width: 420px;
   border-radius: 12px;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  text-align: center;
 }
 
 .modal-content label {
@@ -137,10 +140,10 @@ main {
 
 <div class="modal" id="modal">
   <div class="modal-content">
-    <h3>Adicionar / Editar</h3>
+    <h3>Adicionar / Editar Planta</h3>
 
     <label>Nome *</label>
-    <input id="nome" placeholder="Ex: Coentro">
+    <input id="nome">
 
     <label>Rega (dias)</label>
     <input id="rega" type="number">
@@ -170,19 +173,25 @@ function hojeISO() {
 }
 
 function diasPassados(data) {
-  const inicio = new Date(data);
-  const hoje = new Date();
-  return Math.floor((hoje - inicio) / (1000*60*60*24));
+  return Math.floor((new Date() - new Date(data)) / 86400000);
 }
 
 function precisaHoje(dias, intervalo) {
-  if (!intervalo || intervalo <= 0) return false;
-  if (dias === 0) return false;
+  if (!intervalo || dias === 0) return false;
   return dias % intervalo === 0;
 }
 
 function salvarStorage() {
   localStorage.setItem("horta", JSON.stringify(dados));
+}
+
+function adicionarEvento(i, tipo) {
+  const dataEvento = prompt("Data do evento (AAAA-MM-DD):", hojeISO());
+  if (!dataEvento) return;
+
+  dados[i].eventos.push({ tipo, data: dataEvento });
+  salvarStorage();
+  render();
 }
 
 function render() {
@@ -191,35 +200,38 @@ function render() {
 
   dados.forEach((item, i) => {
     const dias = diasPassados(item.data);
-    const hojeRega = precisaHoje(dias, item.rega);
-    const hojeAdubo = precisaHoje(dias, item.adubo);
-    const hojeColheita = item.colheita && dias === item.colheita;
 
-    let faltaColheita = "";
-    if (item.colheita && dias < item.colheita) {
-      faltaColheita = `<small>⏳ Faltam ${item.colheita - dias} dias para colheita</small>`;
+    let eventosHTML = "";
+    if (item.eventos.length) {
+      eventosHTML = `<div class="eventos">
+        ${item.eventos.map(e => `📌 ${e.tipo} em ${e.data}<br>`).join("")}
+      </div>`;
     }
 
-    const div = document.createElement("div");
-    div.className = "card";
+    lista.innerHTML += `
+      <div class="card">
+        <strong>${item.nome}</strong><br>
+        <small>📅 ${dias} dias desde o plantio</small>
 
-    div.innerHTML = `
-      <strong>${item.nome}</strong><br>
-      <small>📅 ${dias} dias desde o plantio</small><br>
-      ${faltaColheita}
+        ${precisaHoje(dias, item.rega) ? `<div class="alerta rega">💧 REGAR HOJE</div>` : ""}
+        ${precisaHoje(dias, item.adubo) ? `<div class="alerta adubo">🌿 ADUBAR HOJE</div>` : ""}
+        ${item.colheita && dias === item.colheita ? `<div class="alerta colheita">🥬 COLHER HOJE</div>` : ""}
 
-      ${hojeRega ? `<div class="alerta rega">💧 REGAR HOJE</div>` : ""}
-      ${hojeAdubo ? `<div class="alerta adubo">🌿 ADUBAR HOJE</div>` : ""}
-      ${hojeColheita ? `<div class="alerta colheita">🥬 COLHER HOJE</div>` : ""}
+        ${eventosHTML}
 
-      <div class="botoes">
-        <button class="editar" onclick="editar(${i})">Editar</button>
-        <button class="concluir" onclick="concluir(${i})">Concluir</button>
-        <button class="excluir" onclick="excluir(${i})">Excluir</button>
+        <div class="botoes">
+          <button class="evento" onclick="adicionarEvento(${i}, 'germinacao')">🌱 Germinou</button>
+          <button class="evento" onclick="adicionarEvento(${i}, 'adubacao')">🌿 Adubei</button>
+          <button class="evento" onclick="adicionarEvento(${i}, 'colheita')">🥬 Colhi</button>
+        </div>
+
+        <div class="botoes">
+          <button class="editar" onclick="editar(${i})">Editar</button>
+          <button class="concluir" onclick="concluir(${i})">Concluir</button>
+          <button class="excluir" onclick="excluir(${i})">Excluir</button>
+        </div>
       </div>
     `;
-
-    lista.appendChild(div);
   });
 }
 
@@ -245,7 +257,8 @@ function salvarItem() {
     rega: Number(rega.value) || null,
     adubo: Number(adubo.value) || null,
     colheita: Number(colheita.value) || null,
-    data: data.value
+    data: data.value,
+    eventos: editando !== null ? dados[editando].eventos : []
   };
 
   if (editando === null) dados.push(item);
@@ -268,13 +281,14 @@ function editar(i) {
 }
 
 function excluir(i) {
-  dados.splice(i,1);
+  if (!confirm("Excluir esta planta?")) return;
+  dados.splice(i, 1);
   salvarStorage();
   render();
 }
 
 function concluir(i) {
-  dados.splice(i,1);
+  dados.splice(i, 1);
   salvarStorage();
   render();
 }
